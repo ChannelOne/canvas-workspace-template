@@ -1,0 +1,30 @@
+{
+  "name": "canvas-workspace-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./build/index.js",
+  "scripts": {
+    "server": "http-server ./ -p 3000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChannelOne/canvas-workspace-template.git"
+  },
+  "keywords": [
+    "template"
+  ],
+  "author": "DZ Chan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ChannelOne/canvas-workspace-template/issues"
+  },
+  "homepage": "https://github.com/ChannelOne/canvas-workspace-template#readme",
+  "dependencies": {
+    "fabric": "^1.7.3",
+    "ts-loader": "^2.0.0"
+  },
+  "devDependencies": {
+    "webpack": "^1.14.0"
+  }
+}

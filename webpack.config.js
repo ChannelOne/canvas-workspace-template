@@ -18,5 +18,8 @@ module.exports = {
         loaders: [
             {test: /\.ts$/, loader: 'ts-loader'}
         ]
+    },
+    externals: {
+        "fabric": "fabric"
     }
 }

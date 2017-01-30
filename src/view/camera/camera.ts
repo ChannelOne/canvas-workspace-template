@@ -30,4 +30,12 @@ export class Camera {
         this._position = pos;
     }
 
+    get scale()  {
+        return this._scale;
+    }
+
+    set scale(v: number) {
+        this._scale = v;
+    }
+
 }

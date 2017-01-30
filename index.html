@@ -7,6 +7,19 @@
   <meta name="description" content="canvas workspace template">
   <meta name="author" content="DZ Chan">
 
+  <style>
+
+    #test-scroll {
+      height: 10000px;
+    }
+
+    #main-canvas {
+      position: fixed;
+      top: 0;
+    }
+
+  </style>
+
   <!--[if lt IE 9]>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
   <![endif]-->
@@ -14,8 +27,14 @@
 
 <body>
 
+  <div id="test-scroll"></div>
+
   <div id="main-canvas">
+
+
   </div>
+
+  <div id="panel-field"></div>
 
   <canvas id="c"></canvas>
 

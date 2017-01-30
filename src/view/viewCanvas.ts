@@ -11,6 +11,8 @@ interface Point {
 
 export class CanvasView extends DomHelper.FixedElement {
 
+    private _parent: HTMLElement;
+
     private _camera: Camera;
     private _canvasElemId: string;
     private _canvasElem: HTMLCanvasElement;
@@ -21,17 +23,24 @@ export class CanvasView extends DomHelper.FixedElement {
     private _mouseStartPos: Point = null;
     private _startCameraPos: Point = null;
 
+    private _viewportSize: Point;
+
     constructor(painterId: string, classStr: string = "") {
         super("div", classStr);
 
         let winWidth = window.innerWidth,
             winHeight = window.innerHeight;
 
+        this._viewportSize = {
+            x: winWidth,
+            y: winHeight,
+        };
+
         this._camera = new Camera();
 
         this._center = {
-            x: winWidth / 2,
-            y: winHeight / 2,
+            x: 0,
+            y: 0,
         };
 
         this._canvasElemId = painterId + "_" + counter++;
@@ -40,22 +49,38 @@ export class CanvasView extends DomHelper.FixedElement {
         this._canvasElem.width = winWidth;
         this._canvasElem.height = winHeight;
 
-        var parent = document.getElementById(painterId);
-        parent.appendChild(this._canvasElem);
+        this._parent = document.getElementById(painterId);
+        this._parent.appendChild(this._canvasElem);
 
-        parent.addEventListener("contextmenu", (e) => {
+        document.getElementById("test-scroll").addEventListener("scroll", (e) => {
+            this.handleScroll(e);
+        })
+
+        window.addEventListener("scroll", (e) => {
+            this.handleScroll(e);
+        })
+
+        this._parent.addEventListener("click", (e) => {
+            this.handleClick(e);
+        })
+
+        this._parent.addEventListener("scroll", (e) => {
+            this.handleScroll(e);
+        })
+
+        this._parent.addEventListener("contextmenu", (e) => {
             e.preventDefault();
         })
 
-        parent.addEventListener("mousedown", (e: MouseEvent) => {
+        this._parent.addEventListener("mousedown", (e: MouseEvent) => {
             this.handleMouseDown(e);
         })
 
-        parent.addEventListener("mouseup", (e: MouseEvent) => {
+        this._parent.addEventListener("mouseup", (e: MouseEvent) => {
             this.handleMouseUp(e);
         })
 
-        parent.addEventListener("mousemove", (e: MouseEvent) => {
+        this._parent.addEventListener("mousemove", (e: MouseEvent) => {
             this.handleMouseMove(e);
         })
 
@@ -66,7 +91,37 @@ export class CanvasView extends DomHelper.FixedElement {
         this.drawBackground();
     }
 
+    render() {
+        var matrix = this._camera.getTransformMatrix().slice();
+
+        matrix[4] += this._viewportSize.x / 2;
+        matrix[5] += this._viewportSize.y / 2;
+
+        this._fabricCanvas.viewportTransform = matrix;
+        this._fabricCanvas.renderAll();
+    }
+
+    private handleScroll(e: Event) {
+        var height = window.scrollY;
+        this._camera.scale = height * 0.0005 + 1;
+
+        this.render();
+    }
+
+    private handleClick(e: MouseEvent) {
+        var newRect = new fabric.Rect({
+            top: 0,
+            left: 0,
+            width: 100,
+            height: 100,
+            fill: "blue"
+        });
+
+        this._fabricCanvas.add(newRect);
+    }
+
     private handleMouseDown(e: MouseEvent) {
+        // left button
         if (e.which === 3) {
             e.preventDefault();
 
@@ -83,10 +138,12 @@ export class CanvasView extends DomHelper.FixedElement {
     }
 
     private handleMouseUp(e: MouseEvent) {
+        // left button
         if (e.which === 3) {
             e.preventDefault();
             this._mouseStartPos = null;
-            this._fabricCanvas.viewportTransform = this._camera.getTransformMatrix();
+
+            // this.render();
         }
     }
 
@@ -102,15 +159,14 @@ export class CanvasView extends DomHelper.FixedElement {
                 y: this._startCameraPos.y + vector.y,
             };
 
-            this._fabricCanvas.viewportTransform = this._camera.getTransformMatrix();
-            this._fabricCanvas.renderAll();
+            this.render();
         }
     }
 
     private drawBackground() {
         let centerCircle = new fabric.Circle({
-            left: this._center.x,
-            top: this._center.y,
+            left: this._center.x - 8,
+            top: this._center.y - 8,
             radius: 16,
             fill: "red",
             evented: false,
@@ -119,6 +175,7 @@ export class CanvasView extends DomHelper.FixedElement {
         });
 
         this._fabricCanvas.add(centerCircle);
+        this.render();
     }
 
     get transformMatrix() {

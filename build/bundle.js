@@ -47,6 +47,15 @@
 	"use strict";
 	var View = __webpack_require__(1);
 	new View.CanvasView("main-canvas");
+	var Controller = (function () {
+	    function Controller() {
+	        var panelField = document.getElementById("panel-field");
+	        this._panel = new View.PanelView();
+	        this._panel.appendTo(panelField);
+	    }
+	    return Controller;
+	}());
+	new Controller();
 
 
 /***/ },
@@ -56,6 +65,8 @@
 	"use strict";
 	var viewCanvas_1 = __webpack_require__(2);
 	exports.CanvasView = viewCanvas_1.CanvasView;
+	var viewPanel_1 = __webpack_require__(8);
+	exports.PanelView = viewPanel_1.PanelView;
 
 
 /***/ },
@@ -80,28 +91,44 @@
 	        _this._mouseStartPos = null;
 	        _this._startCameraPos = null;
 	        var winWidth = window.innerWidth, winHeight = window.innerHeight;
+	        _this._viewportSize = {
+	            x: winWidth,
+	            y: winHeight,
+	        };
 	        _this._camera = new camera_1.Camera();
 	        _this._center = {
-	            x: winWidth / 2,
-	            y: winHeight / 2,
+	            x: 0,
+	            y: 0,
 	        };
 	        _this._canvasElemId = painterId + "_" + counter++;
 	        _this._canvasElem = util_1.DomHelper.Generic.elem("canvas");
 	        _this._canvasElem.setAttribute("id", _this._canvasElemId);
 	        _this._canvasElem.width = winWidth;
 	        _this._canvasElem.height = winHeight;
-	        var parent = document.getElementById(painterId);
-	        parent.appendChild(_this._canvasElem);
-	        parent.addEventListener("contextmenu", function (e) {
+	        _this._parent = document.getElementById(painterId);
+	        _this._parent.appendChild(_this._canvasElem);
+	        document.getElementById("test-scroll").addEventListener("scroll", function (e) {
+	            _this.handleScroll(e);
+	        });
+	        window.addEventListener("scroll", function (e) {
+	            _this.handleScroll(e);
+	        });
+	        _this._parent.addEventListener("click", function (e) {
+	            _this.handleClick(e);
+	        });
+	        _this._parent.addEventListener("scroll", function (e) {
+	            _this.handleScroll(e);
+	        });
+	        _this._parent.addEventListener("contextmenu", function (e) {
 	            e.preventDefault();
 	        });
-	        parent.addEventListener("mousedown", function (e) {
+	        _this._parent.addEventListener("mousedown", function (e) {
 	            _this.handleMouseDown(e);
 	        });
-	        parent.addEventListener("mouseup", function (e) {
+	        _this._parent.addEventListener("mouseup", function (e) {
 	            _this.handleMouseUp(e);
 	        });
-	        parent.addEventListener("mousemove", function (e) {
+	        _this._parent.addEventListener("mousemove", function (e) {
 	            _this.handleMouseMove(e);
 	        });
 	        _this._fabricCanvas = new fabric.Canvas(_this._canvasElemId, {
@@ -110,7 +137,30 @@
 	        _this.drawBackground();
 	        return _this;
 	    }
+	    CanvasView.prototype.render = function () {
+	        var matrix = this._camera.getTransformMatrix().slice();
+	        matrix[4] += this._viewportSize.x / 2;
+	        matrix[5] += this._viewportSize.y / 2;
+	        this._fabricCanvas.viewportTransform = matrix;
+	        this._fabricCanvas.renderAll();
+	    };
+	    CanvasView.prototype.handleScroll = function (e) {
+	        var height = window.scrollY;
+	        this._camera.scale = height * 0.0005 + 1;
+	        this.render();
+	    };
+	    CanvasView.prototype.handleClick = function (e) {
+	        var newRect = new fabric.Rect({
+	            top: 0,
+	            left: 0,
+	            width: 100,
+	            height: 100,
+	            fill: "blue"
+	        });
+	        this._fabricCanvas.add(newRect);
+	    };
 	    CanvasView.prototype.handleMouseDown = function (e) {
+	        // left button
 	        if (e.which === 3) {
 	            e.preventDefault();
 	            this._mouseStartPos = {
@@ -124,10 +174,10 @@
 	        }
 	    };
 	    CanvasView.prototype.handleMouseUp = function (e) {
+	        // left button
 	        if (e.which === 3) {
 	            e.preventDefault();
 	            this._mouseStartPos = null;
-	            this._fabricCanvas.viewportTransform = this._camera.getTransformMatrix();
 	        }
 	    };
 	    CanvasView.prototype.handleMouseMove = function (e) {
@@ -140,14 +190,13 @@
 	                x: this._startCameraPos.x + vector.x,
 	                y: this._startCameraPos.y + vector.y,
 	            };
-	            this._fabricCanvas.viewportTransform = this._camera.getTransformMatrix();
-	            this._fabricCanvas.renderAll();
+	            this.render();
 	        }
 	    };
 	    CanvasView.prototype.drawBackground = function () {
 	        var centerCircle = new fabric.Circle({
-	            left: this._center.x,
-	            top: this._center.y,
+	            left: this._center.x - 8,
+	            top: this._center.y - 8,
 	            radius: 16,
 	            fill: "red",
 	            evented: false,
@@ -155,6 +204,7 @@
 	            hasBorders: false,
 	        });
 	        this._fabricCanvas.add(centerCircle);
+	        this.render();
 	    };
 	    Object.defineProperty(CanvasView.prototype, "transformMatrix", {
 	        get: function () {
@@ -776,6 +826,16 @@
 	        enumerable: true,
 	        configurable: true
 	    });
+	    Object.defineProperty(Camera.prototype, "scale", {
+	        get: function () {
+	            return this._scale;
+	        },
+	        set: function (v) {
+	            this._scale = v;
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
 	    return Camera;
 	}());
 	exports.Camera = Camera;
@@ -786,6 +846,42 @@
 /***/ function(module, exports) {
 
 	module.exports = fabric;
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var util_1 = __webpack_require__(3);
+	var PanelView = (function (_super) {
+	    __extends(PanelView, _super);
+	    function PanelView() {
+	        var _this = _super.call(this, "div") || this;
+	        _this.left = 0;
+	        _this.top = 0;
+	        _this.width = 230;
+	        _this.height = window.innerHeight;
+	        window.addEventListener("resize", function (e) {
+	            _this.height = window.innerHeight;
+	        });
+	        _this._container = util_1.DomHelper.Generic.elem("div");
+	        _this._dom.appendChild(_this._container);
+	        _this._subpanels = [];
+	        return _this;
+	    }
+	    PanelView.prototype.addPanel = function (subPanel) {
+	        this._subpanels.push(subPanel);
+	        subPanel.appendTo(this._container);
+	    };
+	    return PanelView;
+	}(util_1.DomHelper.FixedElement));
+	exports.PanelView = PanelView;
+
 
 /***/ }
 /******/ ]);
